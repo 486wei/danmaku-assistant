@@ -1,0 +1,243 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8B25BFB381824C119FF21066 /* AssWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497795AAE3D947BFB91170B4 /* AssWriter.swift */; };
+		CAEF591FEACE41349A665540 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6707F0FE33B4DF6A55C5EBB /* ContentView.swift */; };
+		1A3A6DFD0DB348E49C684D96 /* DanmakuAssistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55687DC94F942D7A284118B /* DanmakuAssistantApp.swift */; };
+		9D15AA4657644A1E988BF30F /* DanmakuFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1635CA0DCF494994B497AA90 /* DanmakuFetcher.swift */; };
+		9A0DF370D2C9495896DE9213 /* DanmakuParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836B737511D94FA5A038D511 /* DanmakuParser.swift */; };
+		A7F3C1D2E4B5486798FA0B1C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B32EA83FD0DD42299917D78E /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		497795AAE3D947BFB91170B4 /* AssWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssWriter.swift; sourceTree = "<group>"; };
+		D6707F0FE33B4DF6A55C5EBB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B55687DC94F942D7A284118B /* DanmakuAssistantApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuAssistantApp.swift; sourceTree = "<group>"; };
+		1635CA0DCF494994B497AA90 /* DanmakuFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuFetcher.swift; sourceTree = "<group>"; };
+		836B737511D94FA5A038D511 /* DanmakuParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DanmakuParser.swift; sourceTree = "<group>"; };
+		91B33AC2CBC14DFD88676784 /* DanmakuAssistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DanmakuAssistant.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B32EA83FD0DD42299917D78E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B4F66181E7834F748DB05833 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4C14EAB75BF6423CAB6F012F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		358992CE35E242348747CD5A = {
+			isa = PBXGroup;
+			children = (
+				16EA3B5438364D40871B53AA /* DanmakuAssistant */,
+				91B33AC2CBC14DFD88676784 /* DanmakuAssistant.app */,
+			);
+			sourceTree = "<group>";
+		};
+		16EA3B5438364D40871B53AA /* DanmakuAssistant */ = {
+			isa = PBXGroup;
+			children = (
+				497795AAE3D947BFB91170B4 /* AssWriter.swift */,
+				D6707F0FE33B4DF6A55C5EBB /* ContentView.swift */,
+				B55687DC94F942D7A284118B /* DanmakuAssistantApp.swift */,
+				1635CA0DCF494994B497AA90 /* DanmakuFetcher.swift */,
+				836B737511D94FA5A038D511 /* DanmakuParser.swift */,
+				B32EA83FD0DD42299917D78E /* Assets.xcassets */,
+				B4F66181E7834F748DB05833 /* Info.plist */,
+			);
+			path = DanmakuAssistant;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DD16B187E4C144F7A5BBCFF7 /* DanmakuAssistant */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4DA05B84E29344778FC12FD0 /* Build configuration list for PBXNativeTarget "DanmakuAssistant" */;
+			buildPhases = (
+				E957781DB57846348BAD5355 /* Sources */,
+				4C14EAB75BF6423CAB6F012F /* Frameworks */,
+				51A4F8C745894C5188102331 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DanmakuAssistant;
+			productName = DanmakuAssistant;
+			productReference = 91B33AC2CBC14DFD88676784 /* DanmakuAssistant.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C2CD020B297049B592B73641 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					DD16B187E4C144F7A5BBCFF7 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 12CB674F97EF405A93A7F2D9 /* Build configuration list for PBXProject "DanmakuAssistant" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = 358992CE35E242348747CD5A;
+			productRefGroup = 358992CE35E242348747CD5A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DD16B187E4C144F7A5BBCFF7 /* DanmakuAssistant */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		51A4F8C745894C5188102331 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A7F3C1D2E4B5486798FA0B1C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E957781DB57846348BAD5355 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B25BFB381824C119FF21066 /* AssWriter.swift in Sources */,
+				CAEF591FEACE41349A665540 /* ContentView.swift in Sources */,
+				1A3A6DFD0DB348E49C684D96 /* DanmakuAssistantApp.swift in Sources */,
+				9D15AA4657644A1E988BF30F /* DanmakuFetcher.swift in Sources */,
+				9A0DF370D2C9495896DE9213 /* DanmakuParser.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7962FBC7A4474F16AF7DDDE1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2074CAF954E04447A4F4A1F5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		2BC27A5DA7B84709B86C7EB1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DanmakuAssistant/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yg.danmakuassistant;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AB187EA2377D46D5BE1EA55F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DanmakuAssistant/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yg.danmakuassistant;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		12CB674F97EF405A93A7F2D9 /* Build configuration list for PBXProject "DanmakuAssistant" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7962FBC7A4474F16AF7DDDE1 /* Debug */,
+				2074CAF954E04447A4F4A1F5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4DA05B84E29344778FC12FD0 /* Build configuration list for PBXNativeTarget "DanmakuAssistant" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BC27A5DA7B84709B86C7EB1 /* Debug */,
+				AB187EA2377D46D5BE1EA55F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C2CD020B297049B592B73641 /* Project object */;
+}

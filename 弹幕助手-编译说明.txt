@@ -1,0 +1,132 @@
+弹幕助手 for iPad / iPhone
+==========================
+
+这是一个「只生成弹幕字幕」的 App。它自己不播放视频——
+播放在夸克网盘 App 里完成，本 App 只负责给你产出一个 .ass 字幕文件。
+
+
+一、它做什么
+-----------
+
+  1. 粘 B站 链接 / BV 号，或腾讯视频链接（也可以按片名搜 B站）
+  2. 点「拉取弹幕」（B站按视频总时长自动分段，长视频也会拉全）
+  3. 或者在「本地文件」里导入已有弹幕（B站 XML / JSON / ASS / 纯文本），跳过第 2 步
+  4. 调字号、透明度、速度、显示区域、屏蔽词、分辨率
+  5. 点「生成 .ass」
+  6. 在播放器里挂上这个字幕
+
+生成的字幕存在 App 的 Documents 里（UIFileSharingEnabled 已开），
+「文件」App →「我的 iPhone/iPad」→「弹幕助手」里能直接看到。
+
+
+二、怎么编译
+-----------
+
+  A. 有 Mac（最快，Xcode 直接装到 iPad）
+    1. 双击 DanmakuAssistant.xcodeproj
+    2. 左边点工程图标 → TARGETS → DanmakuAssistant → Signing & Capabilities
+        · Bundle Identifier 填全球唯一的（工程里默认 com.yg.danmakuassistant，建议改成你自己的）
+        · Team 选你的 Apple ID（免费账号就行）
+    3. 插上 iPad，顶部选设备，按 ⌘R
+    4. 第一次运行 iPad 会拦：设置 → 通用 → VPN与设备管理 → 点你的 Apple ID → 信任
+
+  B. 只有 Windows（Sideloadly 签名 —— 但 ipa 必须先由 macOS 生成一次）
+    Windows 上没有 iOS 编译器：Sideloadly 只负责「签名 + 安装」，不负责编译。
+    所以先用下面任一方式拿到未签名 ipa：
+
+      B1. 借一台 Mac（或 macOS 虚拟机），在工程根目录执行：
+            bash build-ipa.sh
+          产物：build/ipa/DanmakuAssistant-unsigned.ipa
+          想换 bundle id：bash build-ipa.sh com.你的名字.danmakuassistant
+
+      B2. 完全没有 Mac：把这个文件夹推到 GitHub 仓库，
+          在 Actions 里跑 workflow「build-unsigned-ipa」（点 Run workflow），
+          跑完在 Artifacts 下载 DanmakuAssistant-unsigned-ipa.zip，解压得到 ipa。
+
+    Windows 端安装步骤（你的 Sideloadly 在 F:\新建文件夹\Sideloadly\sideloadly.exe）：
+      1. 先装 Apple 的「Apple Devices」或 iTunes，否则 Sideloadly 认不到 iPad
+      2. iPad 用数据线连电脑，iPad 上点「信任此电脑」并输锁屏密码
+      3. 打开 Sideloadly，把 ipa 拖进窗口，Device 选你的 iPad，
+         Apple ID 填你的免费账号，点 Start
+      4. 输 Apple ID 密码（开了双重认证就填验证码），等提示 Done
+      5. iPad：设置 → 通用 → VPN与设备管理 → 开发者 App → 你的 Apple ID → 信任
+      6. 免费账号签名 7 天到期，到期用 Sideloadly 重装一次即可；
+         App 的 Documents（已生成的 .ass）不会因此丢失
+
+
+三、怎么挂到夸克播放器
+---------------------
+
+  方式 A（推荐，如果夸克版本支持）：
+    1. 在夸克里播放那个视频
+    2. 点播放器右下角「字幕」或齿轮图标
+    3. 选「导入本地字幕 / 外挂字幕」
+    4. 从「文件」里找到 弹幕助手 文件夹里的 .ass
+
+  方式 B（夸克没有导入字幕功能时）：
+    1. 本 App 里点文件右边的分享按钮
+    2. 选「存储到文件」，存到「我的 iPhone → 夸克网盘」或任意你能访问的位置
+    3. 部分夸克版本会自动扫描同目录下的同名 .ass
+
+  方式 C（实在不行）：
+    把这个 .ass 用 AirDrop 传到 Mac，用 IINA 播（IINA 会自动加载同名 .ass）。
+
+
+四、一个重要提醒
+---------------
+
+  夸克网盘播的是**云端文件**，它的播放器不一定支持外挂字幕——
+  这取决于你装的夸克版本。有的版本支持导入本地字幕，有的没有。
+
+  如果夸克这条路走不通，最稳的仍然是：
+    iPad 上用 nPlayer / Infuse / VLC 播（这些支持外挂 ASS），
+    或者回 Mac 用 IINA。
+
+  本 App 的产物是标准 ASS 字幕，任何支持外挂字幕的播放器都能用。
+
+
+五、功能清单
+-----------
+
+  · 拉弹幕：B站（protobuf 分段，按时长自动算段数）/ 腾讯（JSON 分段）
+  · 搜索：B站关键词搜索，点结果直接拉
+  · 本地导入：B站 XML / JSON / ASS / 纯文本（系统文件选择器，可多选）
+  · 样式：字号 30~300%、透明度 0~100%、速度 20~300%、显示区域 20~100%
+  · 屏蔽词：空格分隔
+  · 分辨率：1080p / 2K / 4K（影响弹幕位置，选错会偏移）
+  · 文件管理：列出已生成的 .ass，可分享、可删除
+  · 分享：系统 ShareLink，可直接 AirDrop / 存到文件
+
+
+六、文件结构
+-----------
+
+  弹幕工具/
+  ├── 弹幕助手-编译说明.txt              本文件
+  ├── build-ipa.sh                     macOS / CI 用：出未签名 ipa
+  ├── .github/workflows/
+  │   └── build-unsigned-ipa.yml       没有 Mac 时用它编译
+  └── DanmakuAssistant/
+      ├── DanmakuAssistant.xcodeproj/  双击这个
+      └── DanmakuAssistant/
+          ├── DanmakuAssistantApp.swift   入口
+          ├── ContentView.swift           界面 + 状态模型
+          ├── AssWriter.swift             ASS 生成
+          ├── DanmakuParser.swift         XML/JSON/ASS/TXT 解析
+          ├── DanmakuFetcher.swift        B站 + 腾讯拉取 + B站搜索
+          ├── Info.plist
+          └── Assets.xcassets/            图标
+
+
+七、这一版修了什么
+-----------------
+
+  1. 长视频只拉到前 6 分钟弹幕 → 现在先取视频总时长再算分段；
+     拿不到时长就「边拉边停」（连续两段为空才停），并区分「真没弹幕」和「被 B站拒绝」。
+  2. 「本地导入」之前只有解析器没有入口 → 加了「导入弹幕文件」按钮，
+     支持多选，导出的 .ass 沿用原文件名。
+  3. project.pbxproj 里 Assets.xcassets 用的是文件 id 而不是 build file id，
+     资源阶段引用是坏的（图标可能不进编译）→ 已补正确的 PBXBuildFile 条目，
+     同时删掉了那条没用的 DanmakuAssistant.app in Resources。
+  4. bundle id 改成 com.yg.danmakuassistant；界面文案不再宣称支持爱奇艺/优酷/芒果
+     （解析器只认 B站 和 腾讯）。

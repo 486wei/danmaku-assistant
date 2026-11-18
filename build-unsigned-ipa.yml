@@ -1,0 +1,28 @@
+name: build-unsigned-ipa
+
+# 没有 Mac 时的路子：让 GitHub 的 macOS 机器帮你编译出未签名 ipa，
+# 下载回来拖进 Sideloadly 签名安装。
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  ipa:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 显示 Xcode 版本
+        run: xcodebuild -version
+
+      - name: 编译未签名 ipa
+        run: bash build-ipa.sh
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: DanmakuAssistant-unsigned-ipa
+          path: build/ipa/DanmakuAssistant-unsigned.ipa
+          if-no-files-found: error
