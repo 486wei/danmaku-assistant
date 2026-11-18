@@ -1,18 +1,46 @@
-name: build-unsigned-ipa
+name: build-ipa
+
 on:
   workflow_dispatch:
   push:
     branches: [main, master]
+
 jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 探针（只验证 Actions 能不能正常跑）
+        run: |
+          echo "Actions OK: $(uname -a)"
+
   ipa:
+    needs: probe
     runs-on: macos-14
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+
+      - name: 还原 Xcode 工程目录
+        shell: bash
+        run: |
+          set -eux
+          mkdir -p DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset
+          mkdir -p DanmakuAssistant/DanmakuAssistant.xcodeproj
+          mv *.swift Info.plist DanmakuAssistant/DanmakuAssistant/
+          mv project.pbxproj DanmakuAssistant/DanmakuAssistant.xcodeproj/
+          if [ -f "Contents (1).json" ]; then
+            mv "Contents (1).json" DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset/Contents.json
+          fi
+          mv Contents.json DanmakuAssistant/DanmakuAssistant/Assets.xcassets/Contents.json
+          mv icon_*.png DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset/
+          find DanmakuAssistant -type f | sort
+
       - name: 显示 Xcode 版本
         run: xcodebuild -version
+
       - name: 编译未签名 ipa
         run: bash build-ipa.sh
+
       - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
