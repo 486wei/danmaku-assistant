@@ -4,16 +4,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  probe:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-13, macos-14, macos-15, macos-15-intel, macos-latest]
-    runs-on: ${{ matrix.os }}
-    continue-on-error: true
+  ipa:
+    runs-on: macos-15-intel
+    timeout-minutes: 30
     steps:
-      - name: 看看这个 macOS 标签能不能起来
+      - uses: actions/checkout@v4
+
+      - name: 还原 Xcode 工程目录（网页上传把子目录拍平了）
+        shell: bash
         run: |
-          uname -a
-          sw_vers || true
-          xcodebuild -version || true
+          set -eux
+          mkdir -p DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset
+          mkdir -p DanmakuAssistant/DanmakuAssistant.xcodeproj
+          mv *.swift Info.plist DanmakuAssistant/DanmakuAssistant/
+          mv project.pbxproj DanmakuAssistant/DanmakuAssistant.xcodeproj/
+          if [ -f "Contents (1).json" ]; then
+            mv "Contents (1).json" DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset/Contents.json
+          fi
+          mv Contents.json DanmakuAssistant/DanmakuAssistant/Assets.xcassets/Contents.json
+          mv icon_*.png DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset/
+          find DanmakuAssistant -type f | sort
+
+      - name: 显示 Xcode 版本
+        run: xcodebuild -version
+
+      - name: 编译未签名 ipa
+        run: bash build-ipa.sh
+
+      - name: 检查产物
+        run: |
+          ls -lh build/ipa/
+          unzip -l build/ipa/DanmakuAssistant-unsigned.ipa | head -20 || true
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: DanmakuAssistant-unsigned-ipa
+          path: build/ipa/DanmakuAssistant-unsigned.ipa
+          if-no-files-found: error
