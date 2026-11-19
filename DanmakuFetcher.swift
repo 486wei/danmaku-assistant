@@ -17,7 +17,7 @@ enum DanmakuFetcher {
     // MARK: - 识别链接
 
     /// 支持：BV 号裸串、bilibili.com/video/BVxxx、
-    /// 腾讯 /x/cover/{cid}/{vid}.html、/x/page/{vid}.html、裸 vid
+    /// 腾讯 /x/cover/{cid}/{vid}.html、/x/page/{vid}.html、m.v.qq.com?vid=、裸 vid
     static func resolve(_ input: String) -> FetchTarget? {
         let s = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty else { return nil }
@@ -25,25 +25,43 @@ enum DanmakuFetcher {
         if let r = s.range(of: "BV[0-9A-Za-z]{10}", options: .regularExpression) {
             return FetchTarget(source: .bilibili, mainID: String(s[r]))
         }
+        // 腾讯分享链接常把 vid / cid 放在 query 里
+        if let vid = queryValue(s, "vid"), isValidVid(vid) {
+            return FetchTarget(source: .tencent, mainID: vid, subID: queryValue(s, "cid") ?? "")
+        }
+        // /x/cover/{cid}/{vid}.html —— 注意 split 后 parts[0] 是空串
         if let r = s.range(of: "/x/cover/([0-9A-Za-z]+)/([0-9A-Za-z]+)\\.html", options: .regularExpression) {
             let parts = String(s[r]).split(separator: "/")
-            if parts.count >= 2 {
-                return FetchTarget(source: .tencent, mainID: String(parts[2]), subID: String(parts[1]))
+            if parts.count >= 5 {
+                return FetchTarget(source: .tencent,
+                                   mainID: String(parts[4]).replacingOccurrences(of: ".html", with: ""),
+                                   subID: String(parts[3]))
             }
         }
-        if let r = s.range(of: "/x/page/([0-9A-Za-z]+)\\.html", options: .regularExpression) {
+        // /x/page/{vid}.html 或 /x/cover/{vid}.html（单段形式）
+        if let r = s.range(of: "/x/(?:page|cover)/([0-9A-Za-z]+)\\.html", options: .regularExpression) {
             let parts = String(s[r]).split(separator: "/")
             if let last = parts.last {
-                return FetchTarget(source: .tencent, mainID: String(last.replacingOccurrences(of: ".html", with: "")))
+                return FetchTarget(source: .tencent,
+                                   mainID: String(last.replacingOccurrences(of: ".html", with: "")))
             }
         }
-        if s.range(of: "^[a-z][0-9]{7,}[a-z0-9]{0,8}$", options: .regularExpression) != nil {
+        if isValidVid(s) {
             return FetchTarget(source: .tencent, mainID: s)
         }
         if s.range(of: "^\\d+$", options: .regularExpression) != nil {
             return FetchTarget(source: .tencent, mainID: s)
         }
         return nil
+    }
+
+    private static func queryValue(_ s: String, _ key: String) -> String? {
+        guard let items = URLComponents(string: s)?.queryItems else { return nil }
+        return items.first(where: { $0.name == key })?.value
+    }
+
+    private static func isValidVid(_ v: String) -> Bool {
+        v.range(of: "^[A-Za-z][0-9]{7,}[A-Za-z0-9]{0,10}$", options: .regularExpression) != nil
     }
 
     // MARK: - 入口
@@ -224,31 +242,85 @@ enum DanmakuFetcher {
     // MARK: - 腾讯
 
     private static func fetchTencent(_ vid: String, duration: Double) async throws -> [Danmaku] {
+        _ = duration
         guard let idxURL = URL(string: "https://dm.video.qq.com/barrage/base/\(vid)") else {
-            throw NSError(domain: "tx", code: -1)
+            throw NSError(domain: "tx", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "vid 不合法：\(vid)"])
         }
-        let (data, _) = try await URLSession.shared.data(from: idxURL)
-        guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let segs = obj["segment_index"] as? [String: Any], !segs.isEmpty else {
-            throw NSError(domain: "tx", code: -2, userInfo: [NSLocalizedDescriptionKey: "这个 vid 没有弹幕"])
+        let (data, resp) = try await URLSession.shared.data(for: tencentRequest(idxURL))
+        if let http = resp as? HTTPURLResponse, http.statusCode != 200 {
+            throw NSError(domain: "tx", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: "腾讯弹幕接口返回 \(http.statusCode)，vid=\(vid)"])
         }
-        var out: [Danmaku] = []
-        for (_, raw) in segs {
-            guard let seg = raw as? [String: Any],
-                  let name = seg["segment_name"] as? String,
-                  let url = URL(string: "https://dm.video.qq.com/barrage/segment/\(vid)/\(name)") else { continue }
-            if let (d, _) = try? await URLSession.shared.data(from: url),
-               let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
-               let list = o["barrage_list"] as? [[String: Any]] {
-                for e in list {
-                    let off = (e["time_offset"] as? NSNumber)?.doubleValue ?? 0
-                    let text = e["content"] as? String ?? ""
-                    if text.isEmpty { continue }
-                    out.append(Danmaku(time: off / 1000.0, text: text))
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "tx", code: -2,
+                          userInfo: [NSLocalizedDescriptionKey: "腾讯弹幕接口返回的不是 JSON（可能是网络被拦或 vid 不对）"])
+        }
+
+        var total = 0
+        if let n = obj["total"] as? NSNumber { total = n.intValue }
+        else if let sTotal = obj["total"] as? String { total = Int(sTotal) ?? 0 }
+
+        guard let info = obj["segment_index"] as? [String: Any], !info.isEmpty else {
+            throw NSError(domain: "tx", code: -3, userInfo: [
+                NSLocalizedDescriptionKey: "拿不到腾讯分段信息（vid=\(vid)）。换个链接或确认视频公开可看"
+            ])
+        }
+        if total == 0 {
+            throw NSError(domain: "tx", code: -4,
+                          userInfo: [NSLocalizedDescriptionKey: "这个视频没有弹幕（vid=\(vid)）"])
+        }
+
+        var names: [String] = []
+        for (_, raw) in info {
+            guard let seg = raw as? [String: Any], let name = seg["segment_name"] as? String else { continue }
+            names.append(name)
+        }
+        names.sort()
+
+        // 并发拉分段（最多 6 个同时），比串行快很多
+        let collected = try await withThrowingTaskGroup(of: [Danmaku].self) { group -> [Danmaku] in
+            var iterator = names.makeIterator()
+            let cap = 6
+            var inflight = 0
+            while inflight < cap, let name = iterator.next() {
+                group.addTask { await tencentSegment(vid: vid, name: name) }
+                inflight += 1
+            }
+            var acc: [Danmaku] = []
+            while let part = try await group.next() {
+                acc.append(contentsOf: part)
+                if let name = iterator.next() {
+                    group.addTask { await tencentSegment(vid: vid, name: name) }
                 }
             }
+            return acc
         }
-        return out.sorted { $0.time < $1.time }
+        return collected.sorted { $0.time < $1.time }
+    }
+
+    private static func tencentRequest(_ url: URL) -> URLRequest {
+        var req = URLRequest(url: url)
+        req.setValue("https://v.qq.com", forHTTPHeaderField: "Referer")
+        req.setValue("Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+        return req
+    }
+
+    private static func tencentSegment(vid: String, name: String) async -> [Danmaku] {
+        guard let url = URL(string: "https://dm.video.qq.com/barrage/segment/\(vid)/\(name)") else { return [] }
+        guard let (d, resp) = try? await URLSession.shared.data(for: tencentRequest(url)),
+              let http = resp as? HTTPURLResponse, http.statusCode == 200,
+              let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+              let list = o["barrage_list"] as? [[String: Any]] else { return [] }
+        return list.compactMap { e -> Danmaku? in
+            let text = (e["content"] as? String) ?? ""
+            if text.isEmpty { return nil }
+            let off: Double
+            if let n = e["time_offset"] as? NSNumber { off = n.doubleValue }
+            else if let sOff = e["time_offset"] as? String { off = Double(sOff) ?? 0 }
+            else { off = 0 }
+            return Danmaku(time: max(0, off / 1000.0), text: text)
+        }
     }
 }
 
