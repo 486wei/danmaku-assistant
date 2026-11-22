@@ -28,6 +28,7 @@ enum DanmakuFetcher {
             .replacingOccurrences(of: "\u{FF0C}", with: "")
             .replacingOccurrences(of: "\u{201C}", with: "")
             .replacingOccurrences(of: "\u{201D}", with: "")
+            .precomposedStringWithCompatibilityMapping   // 全角 → 半角
         guard !s.isEmpty else { return nil }
 
         if let r = s.range(of: "BV[0-9A-Za-z]{10}", options: .regularExpression) {
@@ -69,6 +70,16 @@ enum DanmakuFetcher {
         }
         if s.range(of: "^\\d+$", options: .regularExpression) != nil {
             return FetchTarget(source: .tencent, mainID: s)
+        }
+        // 最后兜底：任何带 .html 的串，取 .html 前面最后一段字母数字
+        if let dot = s.range(of: ".html", options: .caseInsensitive) {
+            let head = String(s[..<dot.lowerBound])
+            if let last = head.split(whereSeparator: { $0 == "/" || $0 == "?" || $0 == "&" }).last {
+                let token = String(last)
+                if token.count >= 6, token.allSatisfy({ $0.isLetter || $0.isNumber }) {
+                    return FetchTarget(source: .tencent, mainID: token)
+                }
+            }
         }
         return nil
     }

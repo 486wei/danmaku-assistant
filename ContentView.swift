@@ -67,7 +67,8 @@ final class AssistantModel: ObservableObject {
         inputURL = raw
         guard !raw.isEmpty else { status = "先粘贴一个视频链接"; return }
         guard let target = DanmakuFetcher.resolve(raw) else {
-            status = "没认出来（只认 B站 BV 号和腾讯视频 vid 号）。收到 \(raw.count) 字：\(raw.prefix(45))"
+            let nonAscii = raw.unicodeScalars.filter { $0.value > 127 }.count
+            status = "没认出来。收到 \(raw.count) 字（非ASCII字符 \(nonAscii) 个）：\(raw.prefix(45))"
             return
         }
         busy = true; errorText = nil
@@ -226,13 +227,17 @@ final class AssistantModel: ObservableObject {
 // MARK: - 字符串清理
 
 extension String {
-    /// 去掉所有空白、换行、零宽字符（粘贴长链接时最容易混进来的东西）
+    /// 去掉所有空白、换行、零宽字符，并把全角字符归一成半角
+    /// （微信/夸克复制出来的链接常带全角 ／ ： ． 或不可见字符，肉眼几乎看不出）
     var cleanedLink: String {
-        components(separatedBy: .whitespacesAndNewlines).joined()
+        let base = components(separatedBy: .whitespacesAndNewlines).joined()
             .replacingOccurrences(of: "\u{200B}", with: "")
             .replacingOccurrences(of: "\u{00A0}", with: "")
+            .replacingOccurrences(of: "\u{FEFF}", with: "")
             .replacingOccurrences(of: "\u{3002}", with: "")
             .replacingOccurrences(of: "\u{FF0C}", with: "")
+        // NFKC：全角 → 半角（／ → /，： → :，． → . 等）
+        return base.precomposedStringWithCompatibilityMapping
     }
 }
 
