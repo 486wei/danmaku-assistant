@@ -64,7 +64,7 @@ final class AssistantModel: ObservableObject {
         let raw = inputURL.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { status = "先粘贴一个视频链接"; return }
         guard let target = DanmakuFetcher.resolve(raw) else {
-            status = "这个链接没认出来（只认 B站 BV 号和腾讯视频 vid 号）"
+            status = "没认出来（只认 B站 BV 号和腾讯视频 vid 号）。收到 \(raw.count) 字：\(raw.prefix(45))"
             return
         }
         busy = true; errorText = nil

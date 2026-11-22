@@ -19,11 +19,15 @@ enum DanmakuFetcher {
     /// 支持：BV 号裸串、bilibili.com/video/BVxxx、
     /// 腾讯 /x/cover/{cid}/{vid}.html、/x/page/{vid}.html、m.v.qq.com?vid=、裸 vid
     static func resolve(_ input: String) -> FetchTarget? {
+        // iOS 文本框会把长链接折行，粘贴进来常带换行/空格 —— 先全部清掉再解析
         let s = input
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .whitespacesAndNewlines).joined()
+            .replacingOccurrences(of: "\u{200B}", with: "")
+            .replacingOccurrences(of: "\u{00A0}", with: "")
             .replacingOccurrences(of: "\u{3002}", with: "")
             .replacingOccurrences(of: "\u{FF0C}", with: "")
-            .replacingOccurrences(of: "\u{200B}", with: "")
+            .replacingOccurrences(of: "\u{201C}", with: "")
+            .replacingOccurrences(of: "\u{201D}", with: "")
         guard !s.isEmpty else { return nil }
 
         if let r = s.range(of: "BV[0-9A-Za-z]{10}", options: .regularExpression) {
