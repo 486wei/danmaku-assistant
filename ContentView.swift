@@ -319,7 +319,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(m.status)
                 .font(.callout)
-                .foregroundStyle(m.errorText == nil ? .secondary : .red)
+                .foregroundStyle(m.errorText == nil ? Color.secondary : Color.red)
             if !m.items.isEmpty {
                 HStack(spacing: 10) {
                     Label("\(m.items.count) 条", systemImage: "text.bubble")

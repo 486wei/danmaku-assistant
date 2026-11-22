@@ -19,7 +19,11 @@ enum DanmakuFetcher {
     /// 支持：BV 号裸串、bilibili.com/video/BVxxx、
     /// 腾讯 /x/cover/{cid}/{vid}.html、/x/page/{vid}.html、m.v.qq.com?vid=、裸 vid
     static func resolve(_ input: String) -> FetchTarget? {
-        let s = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let s = input
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{3002}", with: "")
+            .replacingOccurrences(of: "\u{FF0C}", with: "")
+            .replacingOccurrences(of: "\u{200B}", with: "")
         guard !s.isEmpty else { return nil }
 
         if let r = s.range(of: "BV[0-9A-Za-z]{10}", options: .regularExpression) {
@@ -44,6 +48,16 @@ enum DanmakuFetcher {
             if let last = parts.last {
                 return FetchTarget(source: .tencent,
                                    mainID: String(last.replacingOccurrences(of: ".html", with: "")))
+            }
+        }
+        // 兜底：qq.com 上任何 xxx.html，取最后一段当 vid
+        if s.contains("qq.com"),
+           let r = s.range(of: "/([0-9A-Za-z]{8,16})\\.html", options: .regularExpression) {
+            let token = String(s[r])
+                .replacingOccurrences(of: "/", with: "")
+                .replacingOccurrences(of: ".html", with: "")
+            if isValidVid(token) {
+                return FetchTarget(source: .tencent, mainID: token)
             }
         }
         if isValidVid(s) {
@@ -257,18 +271,13 @@ enum DanmakuFetcher {
                           userInfo: [NSLocalizedDescriptionKey: "腾讯弹幕接口返回的不是 JSON（可能是网络被拦或 vid 不对）"])
         }
 
-        var total = 0
-        if let n = obj["total"] as? NSNumber { total = n.intValue }
-        else if let sTotal = obj["total"] as? String { total = Int(sTotal) ?? 0 }
+        // 注意：腾讯的 total 字段不可靠（真实有弹幕的视频也可能返回 0），
+        // 所以不能用它判断"没有弹幕"，只能以分段里的实际内容为准。
 
         guard let info = obj["segment_index"] as? [String: Any], !info.isEmpty else {
             throw NSError(domain: "tx", code: -3, userInfo: [
                 NSLocalizedDescriptionKey: "拿不到腾讯分段信息（vid=\(vid)）。换个链接或确认视频公开可看"
             ])
-        }
-        if total == 0 {
-            throw NSError(domain: "tx", code: -4,
-                          userInfo: [NSLocalizedDescriptionKey: "这个视频没有弹幕（vid=\(vid)）"])
         }
 
         var names: [String] = []
