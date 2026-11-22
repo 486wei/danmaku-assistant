@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 // MARK: - 模型
@@ -61,14 +62,16 @@ final class AssistantModel: ObservableObject {
 
     func fetch() {
         importedBaseName = nil
-        let raw = inputURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 关键：先干掉所有换行/空格/零宽字符，粘贴长链接怎么折行都不怕
+        let raw = inputURL.cleanedLink
+        inputURL = raw
         guard !raw.isEmpty else { status = "先粘贴一个视频链接"; return }
         guard let target = DanmakuFetcher.resolve(raw) else {
             status = "没认出来（只认 B站 BV 号和腾讯视频 vid 号）。收到 \(raw.count) 字：\(raw.prefix(45))"
             return
         }
         busy = true; errorText = nil
-        status = "正在拉弹幕…（热门长视频分段多，可能要半分钟）"
+        status = "识别到 \(target.source.label)：\(target.mainID)，正在拉弹幕…"
         Task {
             do {
                 let got = try await DanmakuFetcher.fetch(target, duration: 0)
@@ -189,7 +192,7 @@ final class AssistantModel: ObservableObject {
 
     private func fileNameHint() -> String {
         if let base = importedBaseName, !base.isEmpty { return base }
-        let raw = inputURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw = inputURL.cleanedLink
         // BV 号
         if let r = raw.range(of: "BV[0-9A-Za-z]{10}", options: .regularExpression) {
             return String(raw[r])
@@ -202,9 +205,34 @@ final class AssistantModel: ObservableObject {
         return fmt.string(from: Date())
     }
 
+    /// 从系统剪贴板粘贴（自动去掉换行/空格），长链接不用手改
+    func pasteFromClipboard() {
+        let text = UIPasteboard.general.string ?? ""
+        let cleaned = text.cleanedLink
+        if cleaned.isEmpty {
+            status = "剪贴板里没有文字"
+        } else {
+            inputURL = cleaned
+            status = "已粘贴 \(cleaned.count) 字：\(cleaned.prefix(40))…"
+        }
+    }
+
     func delete(_ url: URL) {
         try? FileManager.default.removeItem(at: url)
         refreshFiles()
+    }
+}
+
+// MARK: - 字符串清理
+
+extension String {
+    /// 去掉所有空白、换行、零宽字符（粘贴长链接时最容易混进来的东西）
+    var cleanedLink: String {
+        components(separatedBy: .whitespacesAndNewlines).joined()
+            .replacingOccurrences(of: "\u{200B}", with: "")
+            .replacingOccurrences(of: "\u{00A0}", with: "")
+            .replacingOccurrences(of: "\u{3002}", with: "")
+            .replacingOccurrences(of: "\u{FF0C}", with: "")
     }
 }
 
@@ -219,10 +247,26 @@ struct ContentView: View {
         NavigationSplitView {
             List {
                 Section("获取弹幕") {
-                    TextField("粘贴 B站 BV 号 / 链接，或腾讯视频链接", text: $m.inputURL, axis: .vertical)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .lineLimit(1...3)
+                    // 长链接专用：3~6 行高度 + 一键从剪贴板粘贴（自动去换行）
+                    HStack(alignment: .top, spacing: 8) {
+                        TextField("粘贴链接：B站 BV 号 / 腾讯视频地址",
+                                  text: $m.inputURL, axis: .vertical)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .lineLimit(3...6)
+                            .font(.system(size: 15, design: .monospaced))
+                            .padding(8)
+                            .background(Color.secondary.opacity(0.1),
+                                        in: RoundedRectangle(cornerRadius: 10))
+                        Button {
+                            m.pasteFromClipboard()
+                        } label: {
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 20))
+                                .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.borderless)
+                    }
                     Button {
                         m.fetch()
                     } label: {
