@@ -1,0 +1,75 @@
+name: build2
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  ipa:
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 还原 Xcode 工程目录
+        shell: bash
+        run: |
+          set -eux
+          mkdir -p DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset
+          mkdir -p DanmakuAssistant/DanmakuAssistant.xcodeproj
+          mv *.swift Info.plist DanmakuAssistant/DanmakuAssistant/
+          mv project.pbxproj DanmakuAssistant/DanmakuAssistant.xcodeproj/
+          if [ -f "Contents (1).json" ]; then
+            mv "Contents (1).json" DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset/Contents.json
+          fi
+          mv Contents.json DanmakuAssistant/DanmakuAssistant/Assets.xcassets/Contents.json
+          mv icon_*.png DanmakuAssistant/DanmakuAssistant/Assets.xcassets/AppIcon.appiconset/
+
+      - name: 编译前修正
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          aw = pathlib.Path('DanmakuAssistant/DanmakuAssistant/AssWriter.swift')
+          lines = aw.read_text().split('\n')
+          for i, l in enumerate(lines):
+              if 'dialogue(' in l and 'mv)' in l:
+                  lines[i] = '                events.append(dialogue(t, t + stay, "{" + mv + color + "}" + esc(text)))'
+                  print('patched AssWriter line', i + 1)
+          aw.write_text('\n'.join(lines))
+          PY
+
+      - name: 打印实际参与编译的解析代码（关键诊断）
+        shell: bash
+        run: |
+          echo "===== DanmakuFetcher.resolve 里的 cover 分支 ====="
+          grep -n "x/cover" DanmakuAssistant/DanmakuAssistant/DanmakuFetcher.swift || true
+          echo "===== 是否含全角归一 ====="
+          grep -n "precomposedStringWithCompatibilityMapping" DanmakuAssistant/DanmakuAssistant/DanmakuFetcher.swift || true
+          echo "===== 是否含兜底 ====="
+          grep -n "最后兜底" DanmakuAssistant/DanmakuAssistant/DanmakuFetcher.swift || true
+          echo "===== ContentView 里粘贴/报错文案 ====="
+          grep -n "已粘贴\|非ASCII字符" DanmakuAssistant/DanmakuAssistant/ContentView.swift || true
+          echo "===== 文件大小 ====="
+          wc -c DanmakuAssistant/DanmakuAssistant/DanmakuFetcher.swift DanmakuAssistant/DanmakuAssistant/ContentView.swift
+
+      - name: 编译未签名 ipa
+        shell: bash
+        run: |
+          set -o pipefail
+          bash build-ipa.sh 2>&1 | tee build.log
+
+      - name: 错误摘要
+        if: failure()
+        shell: bash
+        run: |
+          echo "===== error 行 ====="
+          grep -n "error:" build.log | head -30 || true
+          tail -40 build.log || true
+
+      - name: 上传 ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: DanmakuAssistant-unsigned-ipa
+          path: build/ipa/DanmakuAssistant-unsigned.ipa
+          if-no-files-found: error
